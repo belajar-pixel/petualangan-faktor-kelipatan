@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petualangan Faktor & Kelipatan</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f0f9ff;
+            background-image: radial-gradient(#bae6fd 2px, transparent 2px), radial-gradient(#bae6fd 2px, transparent 2px);
+            background-size: 40px 40px;
+            background-position: 0 0, 20px 20px;
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
+        h1, h2, h3, .font-heading {
+            font-family: 'Fredoka One', cursive;
+        }
+        
+        /* 3D Button Styles */
+        .btn-3d {
+            transition: all 0.15s ease;
+            position: relative;
+            top: 0;
+        }
+        .btn-3d:active {
+            top: 4px;
+        }
+        .btn-blue { background-color: #3b82f6; box-shadow: 0 6px 0 #2563eb; color: white; }
+        .btn-blue:active { box-shadow: 0 2px 0 #2563eb; }
+        .btn-purple { background-color: #a855f7; box-shadow: 0 6px 0 #9333ea; color: white; }
+        .btn-purple:active { box-shadow: 0 2px 0 #9333ea; }
+        .btn-green { background-color: #22c55e; box-shadow: 0 6px 0 #16a34a; color: white; }
+        .btn-green:active { box-shadow: 0 2px 0 #16a34a; }
+        .btn-orange { background-color: #f97316; box-shadow: 0 6px 0 #ea580c; color: white; }
+        .btn-orange:active { box-shadow: 0 2px 0 #ea580c; }
+        .btn-red { background-color: #ef4444; box-shadow: 0 6px 0 #dc2626; color: white; }
+        .btn-red:active { box-shadow: 0 2px 0 #dc2626; }
+        .btn-yellow { background-color: #facc15; box-shadow: 0 6px 0 #ca8a04; color: white; }
+        .btn-yellow:active { box-shadow: 0 2px 0 #ca8a04; }
+
+        .btn-option {
+            background-color: white;
+            color: #1f2937;
+            border: 3px solid #e5e7eb;
+            box-shadow: 0 4px 0 #e5e7eb;
+            transition: all 0.1s;
+        }
+        .btn-option:active:not(:disabled) {
+            top: 4px;
+            box-shadow: 0 0 0 #e5e7eb;
+        }
+        .btn-option.correct {
+            background-color: #22c55e; border-color: #16a34a; box-shadow: 0 4px 0 #16a34a; color: white;
+        }
+        .btn-option.wrong {
+            background-color: #ef4444; border-color: #dc2626; box-shadow: 0 4px 0 #dc2626; color: white;
+        }
+        .btn-option:disabled { cursor: not-allowed; opacity: 0.9; }
+
+        /* Animations */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+        
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            70% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+        .animate-pop { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+
+        .progress-bar-inner { transition: width 1s linear; }
+
+        /* Split Screen adjustments for mobile */
+        @media (max-width: 768px) {
+            .split-container { flex-direction: column; }
+            .panel { min-height: 50vh; border-right: none !important; border-bottom: 4px dashed #cbd5e1; }
+            .panel:last-child { border-bottom: none; }
+        }
+    </style>
+</head>
+<body class="w-screen h-screen flex flex-col m-0 p-0 text-gray-800">
+
+    <header class="bg-white/80 backdrop-blur-md border-b-4 border-gray-200 p-2 flex justify-between items-center z-50 shadow-sm shrink-0">
+        <div class="flex items-center gap-2 text-xl font-heading text-blue-600">
+            <i class="fa-solid fa-rocket animate-float"></i>
+            <span class="hidden sm:inline">Petualangan Matematika</span>
+        </div>
+        <div class="flex gap-3">
+            <button id="btn-home" class="btn-3d btn-yellow w-10 h-10 rounded-full flex items-center justify-center text-lg" title="Kembali ke Beranda" onclick="showScreen('screen-menu')">
+                <i class="fa-solid fa-home"></i>
+            </button>
+            <button id="btn-music" class="btn-3d btn-blue w-10 h-10 rounded-full flex items-center justify-center text-lg" title="Musik" onclick="toggleMusic()">
+                <i class="fa-solid fa-music"></i>
+            </button>
+            <button id="btn-sound" class="btn-3d btn-purple w-10 h-10 rounded-full flex items-center justify-center text-lg" title="Efek Suara" onclick="toggleSound()">
+                <i class="fa-solid fa-volume-up"></i>
+            </button>
+            <button id="btn-fullscreen" class="btn-3d btn-green w-10 h-10 rounded-full flex items-center justify-center text-lg" title="Layar Penuh" onclick="toggleFullScreen()">
+                <i class="fa-solid fa-expand"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="flex-grow relative overflow-hidden flex justify-center items-center">
+        
+        <!-- SCREEN 1: MENU UTAMA -->
+        <section id="screen-menu" class="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-blue-300 to-blue-100 z-40 transition-opacity duration-500">
+            <div class="text-center animate-pop">
+                <div class="text-8xl mb-4 animate-float">🌟🧮🚀</div>
+                <h1 class="text-4xl md:text-6xl font-heading text-white drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] border-black mb-2" style="-webkit-text-stroke: 2px #1e3a8a;">
+                    PETUALANGAN<br><span class="text-yellow-400">FAKTOR & KELIPATAN</span>
+                </h1>
+                <p class="text-lg md:text-xl font-bold text-blue-900 mb-8 bg-white/50 inline-block px-4 py-1 rounded-full">
+                    “Ayo Berhitung, Adu Cepat, Jadilah Juara Matematika!”
+                </p>
+                <div class="mt-4">
+                    <button onclick="showSetup()" class="btn-3d btn-green text-2xl md:text-3xl px-10 py-4 rounded-2xl font-heading flex items-center gap-3 mx-auto">
+                        <i class="fa-solid fa-play"></i> MULAI GAME
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- SCREEN 2: SETUP (NAMA & LEVEL) -->
+        <section id="screen-setup" class="absolute inset-0 hidden flex-col items-center justify-center bg-gradient-to-b from-purple-300 to-purple-100 z-30 overflow-y-auto py-10">
+            <div class="bg-white p-6 md:p-8 rounded-3xl shadow-xl max-w-4xl w-11/12 animate-pop border-8 border-purple-200">
+                <h2 class="text-3xl font-heading text-purple-700 text-center mb-6">Persiapan Pemain</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <!-- Pemain 1 -->
+                    <div class="bg-blue-50 p-4 rounded-2xl border-4 border-blue-200 text-center">
+                        <div class="text-5xl mb-2">👦🏻</div>
+                        <h3 class="font-heading text-xl text-blue-600 mb-2">PEMAIN 1 (KIRI)</h3>
+                        <input type="text" id="input-p1" placeholder="Nama Pemain 1" class="w-full text-center font-bold text-xl p-3 border-2 border-blue-300 rounded-xl focus:outline-none focus:border-blue-500" value="Budi">
+                    </div>
+                    <!-- Pemain 2 -->
+                    <div class="bg-orange-50 p-4 rounded-2xl border-4 border-orange-200 text-center">
+                        <div class="text-5xl mb-2">👧🏽</div>
+                        <h3 class="font-heading text-xl text-orange-600 mb-2">PEMAIN 2 (KANAN)</h3>
+                        <input type="text" id="input-p2" placeholder="Nama Pemain 2" class="w-full text-center font-bold text-xl p-3 border-2 border-orange-300 rounded-xl focus:outline-none focus:border-orange-500" value="Siti">
+                    </div>
+                </div>
+
+                <h3 class="text-2xl font-heading text-center text-gray-700 mb-4">Pilih Tingkat Kesulitan:</h3>
+                <div class="flex flex-col md:flex-row justify-center gap-4 mb-4">
+                    <button onclick="startGame('mudah')" class="btn-3d btn-green flex-1 py-4 px-6 rounded-2xl font-heading text-xl">
+                        <i class="fa-solid fa-star text-yellow-300"></i> MUDAH
+                        <div class="text-sm font-nunito font-bold mt-1">Faktor Dasar & Kelipatan</div>
+                    </button>
+                    <button onclick="startGame('sedang')" class="btn-3d btn-yellow flex-1 py-4 px-6 rounded-2xl font-heading text-xl">
+                        <i class="fa-solid fa-star text-orange-500"></i><i class="fa-solid fa-star text-orange-500"></i> SEDANG
+                        <div class="text-sm font-nunito font-bold mt-1">Faktor/Kelipatan Persekutuan</div>
+                    </button>
+                    <button onclick="startGame('sulit')" class="btn-3d btn-red flex-1 py-4 px-6 rounded-2xl font-heading text-xl">
+                        <i class="fa-solid fa-fire text-yellow-300"></i> SULIT
+                        <div class="text-sm font-nunito font-bold mt-1">FPB, KPK & Soal Cerita</div>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- SCREEN 3: GAME SPLIT SCREEN -->
+        <section id="screen-game" class="absolute inset-0 hidden z-20">
+            <div class="w-full h-full flex split-container">
+                
+                <!-- PANEL PEMAIN 1 (KIRI) -->
+                <div id="panel-p1" class="panel flex-1 bg-blue-50 border-r-4 border-dashed border-gray-400 p-2 sm:p-4 flex flex-col relative">
+                    <!-- Header Panel 1 -->
+                    <div class="bg-blue-500 text-white rounded-2xl p-2 sm:p-3 shadow-md flex justify-between items-center mb-3">
+                        <div class="flex items-center gap-2">
+                            <div class="text-3xl bg-white rounded-full w-10 h-10 flex items-center justify-center">👦🏻</div>
+                            <div>
+                                <div id="p1-name-display" class="font-heading text-lg sm:text-xl leading-none">Budi</div>
+                                <div class="text-xs font-bold text-blue-200" id="p1-level-display">Level Mudah</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xs font-bold text-blue-200">SKOR</div>
+                            <div id="p1-score" class="font-heading text-2xl sm:text-3xl text-yellow-300 leading-none">0</div>
+                        </div>
+                    </div>
+
+                    <!-- Progress & Timer -->
+                    <div class="flex justify-between text-sm font-bold text-blue-800 mb-1">
+                        <span id="p1-q-count">Soal 1 / 10</span>
+                        <span>⏱ <span id="p1-timer-text">20</span>s</span>
+                    </div>
+                    <div class="w-full bg-blue-200 rounded-full h-3 mb-4 overflow-hidden">
+                        <div id="p1-timer-bar" class="bg-red-500 h-3 rounded-full progress-bar-inner" style="width: 100%"></div>
+                    </div>
+
+                    <!-- Area Soal -->
+                    <div class="flex-grow flex flex-col relative">
+                        <div class="bg-white border-4 border-blue-200 rounded-2xl p-4 sm:p-6 text-center shadow-sm mb-4 min-h-[120px] flex items-center justify-center">
+                            <h3 id="p1-question-text" class="text-lg sm:text-xl font-bold text-gray-800">Memuat soal...</h3>
+                        </div>
+
+                        <!-- Pilihan Jawaban -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4" id="p1-options">
+                            <!-- Tombol digenerate via JS -->
+                        </div>
+
+                        <!-- Overlay Feedback (Benar/Salah) -->
+                        <div id="p1-feedback" class="hidden absolute inset-0 bg-white/95 rounded-2xl p-4 flex-col items-center justify-center text-center z-10 animate-pop border-4 border-blue-300">
+                            <div id="p1-feedback-icon" class="text-6xl mb-2">✅</div>
+                            <h3 id="p1-feedback-title" class="font-heading text-2xl mb-2">KEREEEN!</h3>
+                            <p id="p1-feedback-exp" class="font-bold text-gray-700 mb-4 bg-gray-100 p-3 rounded-xl text-sm w-full">Penjelasan disini.</p>
+                            <button onclick="nextQuestion(1)" class="btn-3d btn-blue px-6 py-2 rounded-xl font-bold">Lanjut <i class="fa-solid fa-arrow-right"></i></button>
+                        </div>
+                    </div>
+                    
+                    <!-- P1 Waiting Overlay -->
+                    <div id="p1-waiting" class="hidden absolute inset-0 bg-blue-900/80 backdrop-blur-sm z-20 flex flex-col items-center justify-center text-white">
+                        <div class="text-6xl mb-4 animate-bounce">🏆</div>
+                        <h2 class="font-heading text-2xl mb-2">Hebat!</h2>
+                        <p class="font-bold">Menunggu Pemain 2 selesai...</p>
+                    </div>
+                </div>
+
+                <!-- PANEL PEMAIN 2 (KANAN) -->
+                <div id="panel-p2" class="panel flex-1 bg-orange-50 p-2 sm:p-4 flex flex-col relative">
+                    <!-- Header Panel 2 -->
+                    <div class="bg-orange-500 text-white rounded-2xl p-2 sm:p-3 shadow-md flex justify-between items-center mb-3">
+                        <div class="flex items-center gap-2">
+                            <div class="text-3xl bg-white rounded-full w-10 h-10 flex items-center justify-center">👧🏽</div>
+                            <div>
+                                <div id="p2-name-display" class="font-heading text-lg sm:text-xl leading-none">Siti</div>
+                                <div class="text-xs font-bold text-orange-200" id="p2-level-display">Level Mudah</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xs font-bold text-orange-200">SKOR</div>
+                            <div id="p2-score" class="font-heading text-2xl sm:text-3xl text-yellow-300 leading-none">0</div>
+                        </div>
+                    </div>
+
+                    <!-- Progress & Timer -->
+                    <div class="flex justify-between text-sm font-bold text-orange-800 mb-1">
+                        <span id="p2-q-count">Soal 1 / 10</span>
+                        <span>⏱ <span id="p2-timer-text">20</span>s</span>
+                    </div>
+                    <div class="w-full bg-orange-200 rounded-full h-3 mb-4 overflow-hidden">
+                        <div id="p2-timer-bar" class="bg-red-500 h-3 rounded-full progress-bar-inner" style="width: 100%"></div>
+                    </div>
+
+                    <!-- Area Soal -->
+                    <div class="flex-grow flex flex-col relative">
+                        <div class="bg-white border-4 border-orange-200 rounded-2xl p-4 sm:p-6 text-center shadow-sm mb-4 min-h-[120px] flex items-center justify-center">
+                            <h3 id="p2-question-text" class="text-lg sm:text-xl font-bold text-gray-800">Memuat soal...</h3>
+                        </div>
+
+                        <!-- Pilihan Jawaban -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4" id="p2-options">
+                            <!-- Tombol digenerate via JS -->
+                        </div>
+
+                        <!-- Overlay Feedback (Benar/Salah) -->
+                        <div id="p2-feedback" class="hidden absolute inset-0 bg-white/95 rounded-2xl p-4 flex-col items-center justify-center text-center z-10 animate-pop border-4 border-orange-300">
+                            <div id="p2-feedback-icon" class="text-6xl mb-2">✅</div>
+                            <h3 id="p2-feedback-title" class="font-heading text-2xl mb-2">KEREEEN!</h3>
+                            <p id="p2-feedback-exp" class="font-bold text-gray-700 mb-4 bg-gray-100 p-3 rounded-xl text-sm w-full">Penjelasan disini.</p>
+                            <button onclick="nextQuestion(2)" class="btn-3d btn-orange px-6 py-2 rounded-xl font-bold">Lanjut <i class="fa-solid fa-arrow-right"></i></button>
+                        </div>
+                    </div>
+                    
+                    <!-- P2 Waiting Overlay -->
+                    <div id="p2-waiting" class="hidden absolute inset-0 bg-orange-900/80 backdrop-blur-sm z-20 flex flex-col items-center justify-center text-white">
+                        <div class="text-6xl mb-4 animate-bounce">🏆</div>
+                        <h2 class="font-heading text-2xl mb-2">Luar Biasa!</h2>
+                        <p class="font-bold">Menunggu Pemain 1 selesai...</p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- SCREEN 4: HASIL AKHIR -->
+        <section id="screen-result" class="absolute inset-0 hidden flex-col items-center justify-center bg-gradient-to-b from-yellow-300 to-orange-200 z-50 overflow-y-auto py-10">
+            <div class="bg-white p-6 md:p-10 rounded-3xl shadow-2xl max-w-4xl w-11/12 animate-pop border-8 border-yellow-400 text-center relative mt-10">
+                
+                <!-- Trophy Pemenang -->
+                <div class="absolute -top-16 left-1/2 transform -translate-x-1/2 text-8xl drop-shadow-lg">
+                    🏆
+                </div>
+
+                <h1 class="text-4xl md:text-5xl font-heading text-yellow-600 mt-6 mb-2">HASIL AKHIR</h1>
+                <h2 id="winner-announcement" class="text-2xl font-bold text-gray-700 mb-8 bg-yellow-100 py-2 px-6 rounded-full inline-block">Budi Menang!</h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <!-- Stat P1 -->
+                    <div class="bg-blue-50 p-4 rounded-2xl border-4 border-blue-200">
+                        <h3 id="res-name-p1" class="font-heading text-2xl text-blue-600 mb-2">Budi</h3>
+                        <div class="text-5xl font-heading text-blue-800 mb-4" id="res-score-p1">100</div>
+                        <div class="grid grid-cols-2 gap-2 text-sm font-bold">
+                            <div class="bg-green-100 text-green-700 p-2 rounded-lg">✅ Benar: <span id="res-benar-p1">10</span></div>
+                            <div class="bg-red-100 text-red-700 p-2 rounded-lg">❌ Salah: <span id="res-salah-p1">0</span></div>
+                        </div>
+                        <div class="mt-2 text-blue-700 font-bold bg-blue-100 py-1 rounded-lg">Akurasi: <span id="res-acc-p1">100%</span></div>
+                    </div>
+                    
+                    <!-- Stat P2 -->
+                    <div class="bg-orange-50 p-4 rounded-2xl border-4 border-orange-200">
+                        <h3 id="res-name-p2" class="font-heading text-2xl text-orange-600 mb-2">Siti</h3>
+                        <div class="text-5xl font-heading text-orange-800 mb-4" id="res-score-p2">80</div>
+                        <div class="grid grid-cols-2 gap-2 text-sm font-bold">
+                            <div class="bg-green-100 text-green-700 p-2 rounded-lg">✅ Benar: <span id="res-benar-p2">8</span></div>
+                            <div class="bg-red-100 text-red-700 p-2 rounded-lg">❌ Salah: <span id="res-salah-p2">2</span></div>
+                        </div>
+                        <div class="mt-2 text-orange-700 font-bold bg-orange-100 py-1 rounded-lg">Akurasi: <span id="res-acc-p2">80%</span></div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    <button onclick="showSetup()" class="btn-3d btn-green text-xl px-8 py-3 rounded-2xl font-heading">
+                        <i class="fa-solid fa-rotate-right"></i> MAIN LAGI
+                    </button>
+                    <button onclick="showScreen('screen-menu')" class="btn-3d btn-blue text-xl px-8 py-3 rounded-2xl font-heading">
+                        <i class="fa-solid fa-home"></i> MENU UTAMA
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // === STATE PERMAINAN ===
+        const TOTAL_QUESTIONS = 10;
+        const TIME_LIMIT = 20;
+
+        let state = {
+            level: 'mudah',
+            settings: { music: false, sound: true },
+            p1: { name: 'Pemain 1', score: 0, currentQ: 0, correct: 0, timer: null, timeLeft: 0, questions: [], finished: false },
+            p2: { name: 'Pemain 2', score: 0, currentQ: 0, correct: 0, timer: null, timeLeft: 0, questions: [], finished: false }
+        };
+
+        // === AUDIO ENGINE ===
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+        let bgMusicOscillators = [];
+        let musicPlaying = false;
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new AudioContext();
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        // Efek Suara Synthesizer Sederhana
+        function playTone(freq, type, duration, vol=0.1) {
+            if (!state.settings.sound) return;
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function playClick() { playTone(600, 'sine', 0.1); }
+        function playTick() { playTone(800, 'square', 0.05, 0.05); }
+        function playWin() { 
+            if (!state.settings.sound) return;
+            initAudio();
+            [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+                setTimeout(() => playTone(freq, 'sine', 0.3, 0.2), i * 150);
+            });
+        }
+
+        // Web Speech API untuk Suara "KEREEEN" & "BROOOT"
+        function speak(text, pitch, rate) {
+            if (!state.settings.sound || !window.speechSynthesis) return;
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'id-ID';
+            utterance.pitch = pitch;
+            utterance.rate = rate;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function playKereen() {
+            speak("Kereeen!", 1.8, 1.2);
+            playTone(800, 'sine', 0.3, 0.2); // + efek lonceng kecil
+            setTimeout(() => playTone(1000, 'sine', 0.4, 0.2), 100);
+        }
+
+        function playBrooot() {
+            speak("Broot!", 0.2, 0.8);
+            playTone(150, 'sawtooth', 0.6, 0.3); // efek suara salah rendah
+        }
+
+        // Toggle Settings
+        function toggleSound() {
+            state.settings.sound = !state.settings.sound;
+            document.getElementById('btn-sound').innerHTML = state.settings.sound ? '<i class="fa-solid fa-volume-up"></i>' : '<i class="fa-solid fa-volume-xmark"></i>';
+            document.getElementById('btn-sound').classList.toggle('btn-purple', state.settings.sound);
+            document.getElementById('btn-sound').classList.toggle('bg-gray-400', !state.settings.sound);
+            if(state.settings.sound) playClick();
+        }
+
+        function toggleMusic() {
+            state.settings.music = !state.settings.music;
+            document.getElementById('btn-music').innerHTML = state.settings.music ? '<i class="fa-solid fa-music"></i>' : '<i class="fa-solid fa-music text-gray-500 line-through"></i>';
+            document.getElementById('btn-music').classList.toggle('btn-blue', state.settings.music);
+            document.getElementById('btn-music').classList.toggle('bg-gray-400', !state.settings.music);
+            
+            if (state.settings.music) {
+                playClick();
+                // We won't build a full BGM engine via oscillators here to save memory and CPU,
+                // A simulated continuous loop could be added, but modern browsers restrict auto-play anyway.
+                // We'll leave the toggle visual.
+            }
+        }
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => console.log(err));
+            } else {
+                if (document.exitFullscreen) document.exitFullscreen();
+            }
+            playClick();
+        }
+
+        // === MATEMATIKA UTILS ===
+        const fpb = (a, b) => b === 0 ? a : fpb(b, a % b);
+        const kpk = (a, b) => (a * b) / fpb(a, b);
+        const getFactors = (n) => {
+            let factors = [];
+            for (let i = 1; i <= n; i++) { if (n % i === 0) factors.push(i); }
+            return factors;
+        };
+
+        // Shuffle array
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Random integer [min, max]
+        function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+        // === GENERATOR SOAL ===
+        function generateQuestion(level, existingQuestions) {
+            let q, options, ansIndex, exp;
+            let type = randInt(1, 3);
+            let isDuplicate = true;
+            let attempts = 0;
+
+            while (isDuplicate && attempts < 50) {
+                if (level === 'mudah') {
+                    if (type === 1) { // Faktor sederhana
+                        let n = randInt(6, 20);
+                        let factors = getFactors(n);
+                        let correct = factors[randInt(1, factors.length - 1)]; // Hindari 1 kalau bisa
+                        q = `Manakah yang merupakan faktor dari ${n}?`;
+                        let wrongs = new Set();
+                        while(wrongs.size < 3) {
+                            let w = randInt(2, 25);
+                            if (n % w !== 0) wrongs.add(w);
+                        }
+                        options = [correct, ...Array.from(wrongs)];
+                        exp = `Faktor dari ${n} adalah ${factors.join(', ')}. Jadi ${correct} adalah benar.`;
+                    } else if (type === 2) { // Kelipatan
+                        let n = randInt(2, 6);
+                        let mult = randInt(2, 5);
+                        let correct = n * mult;
+                        q = `Manakah yang merupakan kelipatan dari ${n}?`;
+                        let wrongs = new Set();
+                        while(wrongs.size < 3) {
+                            let w = randInt(n+1, n*8);
+                            if (w % n !== 0) wrongs.add(w);
+                        }
+                        options = [correct, ...Array.from(wrongs)];
+                        exp = `Kelipatan ${n} adalah ${n}, ${n*2}, ${n*3}, dst. ${correct} adalah ${n} × ${mult}.`;
+                    } else { // Kelipatan kurang dari
+                        let n = randInt(3, 5);
+                        let limit = n * randInt(3, 5);
+                        let correctList = [];
+                        for(let i=n; i<limit; i+=n) correctList.push(i);
+                        q = `Kelipatan ${n} yang kurang dari ${limit} adalah...`;
+                        let correctStr = correctList.join(', ');
+                        options = [correctStr];
+                        while(options.length < 4) {
+                            let wArr = [];
+                            for(let i=0; i<correctList.length; i++) wArr.push(correctList[i] + randInt(-1, 2));
+                            let wStr = [...new Set(wArr)].sort((a,b)=>a-b).join(', ');
+                            if(wStr !== correctStr && !options.includes(wStr)) options.push(wStr);
+                        }
+                        correct = options[0];
+                        exp = `Kelipatan ${n} di bawah ${limit} adalah ${correctStr}.`;
+                    }
+                } 
+                else if (level === 'sedang') {
+                    if (type === 1) { // Semua faktor
+                        let n = randInt(12, 30);
+                        let correct = getFactors(n).join(', ');
+                        q = `Semua faktor dari bilangan ${n} adalah...`;
+                        options = [correct];
+                        while(options.length < 4) {
+                            let w = getFactors(n);
+                            if(randInt(0,1)) w.pop(); else w.push(randInt(n+1, n+5)); // buat salah
+                            let wStr = w.join(', ');
+                            if(!options.includes(wStr)) options.push(wStr);
+                        }
+                        exp = `Bilangan yang dapat membagi habis ${n} adalah ${correct}.`;
+                    } else if (type === 2) { // Faktor persekutuan
+                        let a = randInt(6, 12);
+                        let b = randInt(8, 16);
+                        if (a===b) b++;
+                        let fa = getFactors(a); let fb = getFactors(b);
+                        let common = fa.filter(x => fb.includes(x));
+                        q = `Faktor persekutuan dari ${a} dan ${b} adalah...`;
+                        let correct = common.join(', ');
+                        options = [correct];
+                        while(options.length < 4) {
+                            let w = [...common, randInt(common[common.length-1]+1, Math.max(a,b))];
+                            let wStr = w.join(', ');
+                            if(!options.includes(wStr)) options.push(wStr);
+                        }
+                        exp = `Faktor ${a}=${fa.join(',')}. Faktor ${b}=${fb.join(',')}. Yang sama: ${correct}.`;
+                    } else { // Bukan faktor
+                        let n = randInt(15, 36);
+                        let factors = getFactors(n);
+                        let wrongFactors = new Set();
+                        while(wrongFactors.size < 3) {
+                            let f = factors[randInt(1, factors.length-1)];
+                            wrongFactors.add(f);
+                        }
+                        let correct = randInt(2, 20); // The one that is NOT a factor
+                        while (n % correct === 0) correct = randInt(2, 20);
+                        
+                        q = `Manakah yang BUKAN merupakan faktor dari ${n}?`;
+                        options = [correct, ...Array.from(wrongFactors)];
+                        exp = `${correct} tidak dapat membagi habis ${n}. Faktor dari ${n} adalah ${factors.join(', ')}.`;
+                    }
+                }
+                else { // Sulit
+                    if (type === 1) { // FPB
+                        let a = randInt(12, 36);
+                        let b = randInt(16, 48);
+                        if(a===b) b+=4;
+                        let correct = fpb(a, b);
+                        q = `Tentukan FPB (Faktor Persekutuan Terbesar) dari ${a} dan ${b}.`;
+                        options = [correct];
+                        while(options.length<4) {
+                            let w = correct + randInt(-3, 6);
+                            if(w>0 && !options.includes(w)) options.push(w);
+                        }
+                        exp = `Faktor ${a}=${getFactors(a).join(',')}. Faktor ${b}=${getFactors(b).join(',')}. Terbesar yang sama adalah ${correct}.`;
+                    } else if (type === 2) { // KPK
+                        let a = randInt(4, 12);
+                        let b = randInt(6, 15);
+                        if(a===b) b++;
+                        let correct = kpk(a, b);
+                        q = `Berapakah KPK (Kelipatan Persekutuan Terkecil) dari ${a} dan ${b}?`;
+                        options = [correct];
+                        while(options.length<4) {
+                            let w = correct + (randInt(-2, 3) * Math.min(a,b));
+                            if(w>0 && !options.includes(w)) options.push(w);
+                        }
+                        exp = `Kelipatan ${a} dan ${b} yang pertama kali bertemu (sama) adalah ${correct}.`;
+                    } else { // Soal Cerita
+                        let a = randInt(3, 6);
+                        let b = randInt(4, 8);
+                        if(a===b) b++;
+                        let correct = kpk(a, b);
+                        q = `Lampu A berkedip tiap ${a} detik. Lampu B tiap ${b} detik. Jika menyala bersama sekarang, berapa detik lagi keduanya menyala bersama?`;
+                        options = [correct];
+                        while(options.length<4) {
+                            let w = correct + randInt(-4, 10);
+                            if(w>0 && !options.includes(w)) options.push(w);
+                        }
+                        exp = `Ini soal KPK. KPK dari ${a} dan ${b} adalah ${correct} detik.`;
+                    }
+                }
+
+                // Cek duplikasi
+                let qStr = q.toString();
+                if (!existingQuestions.includes(qStr)) {
+                    isDuplicate = false;
+                    
+                    // Acak opsi jawaban dan temukan indeks yang benar
+                    let correctVal = options[0];
+                    shuffle(options);
+                    ansIndex = options.indexOf(correctVal);
+
+                    return { q: qStr, options: options, ans: ansIndex, exp: exp };
+                }
+                attempts++;
+            }
+            // Fallback (jarang terjadi)
+            return { q: `Berapa KPK dari 2 dan 3?`, options: [5,6,7,8], ans: 1, exp: "KPK 2 dan 3 adalah 6." };
+        }
+
+        // === PENGATURAN LAYAR ===
+        function showScreen(screenId) {
+            playClick();
+            ['screen-menu', 'screen-setup', 'screen-game', 'screen-result'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+                document.getElementById(id).classList.remove('flex');
+            });
+            let target = document.getElementById(screenId);
+            target.classList.remove('hidden');
+            if (screenId !== 'screen-game') {
+                target.classList.add('flex');
+            }
+        }
+
+        function showSetup() {
+            showScreen('screen-setup');
+        }
+
+        function startGame(level) {
+            playClick();
+            initAudio(); // Penting untuk inisialisasi user-gesture audio
+            state.level = level;
+            
+            // Ambil Nama
+            state.p1.name = document.getElementById('input-p1').value || 'Pemain 1';
+            state.p2.name = document.getElementById('input-p2').value || 'Pemain 2';
+            
+            // Reset State
+            [state.p1, state.p2].forEach(p => {
+                p.score = 0; p.currentQ = 0; p.correct = 0; p.finished = false;
+                p.questions = [];
+                if(p.timer) clearInterval(p.timer);
+            });
+
+            // Generate Questions
+            let allQText = []; // Untuk memastikan P1 dan P2 tidak dapat soal yang sama persis
+            for(let i=0; i<TOTAL_QUESTIONS; i++) {
+                let q1 = generateQuestion(level, allQText);
+                allQText.push(q1.q);
+                state.p1.questions.push(q1);
+
+                let q2 = generateQuestion(level, allQText);
+                allQText.push(q2.q);
+                state.p2.questions.push(q2);
+            }
+
+            // Update UI Nama & Level
+            document.getElementById('p1-name-display').innerText = state.p1.name;
+            document.getElementById('p2-name-display').innerText = state.p2.name;
+            let levelText = 'Level ' + level.charAt(0).toUpperCase() + level.slice(1);
+            document.getElementById('p1-level-display').innerText = levelText;
+            document.getElementById('p2-level-display').innerText = levelText;
+
+            // Update Skor & Layar Tunggu
+            updateScoreUI(1); updateScoreUI(2);
+            document.getElementById('p1-waiting').classList.add('hidden');
+            document.getElementById('p2-waiting').classList.add('hidden');
+
+            showScreen('screen-game');
+            
+            // Mulai ronde pertama
+            loadQuestion(1);
+            loadQuestion(2);
+        }
+
+        function loadQuestion(playerNum) {
+            let p = playerNum === 1 ? state.p1 : state.p2;
+            let prefix = playerNum === 1 ? 'p1' : 'p2';
+
+            if (p.currentQ >= TOTAL_QUESTIONS) {
+                p.finished = true;
+                document.getElementById(`${prefix}-waiting`).classList.remove('hidden');
+                checkGameEnd();
+                return;
+            }
+
+            let qData = p.questions[p.currentQ];
+            
+            // Update UI
+            document.getElementById(`${prefix}-q-count`).innerText = `Soal ${p.currentQ + 1} / ${TOTAL_QUESTIONS}`;
+            document.getElementById(`${prefix}-question-text`).innerText = qData.q;
+            document.getElementById(`${prefix}-feedback`).classList.add('hidden');
+            
+            let optionsHtml = '';
+            const labels = ['A', 'B', 'C', 'D'];
+            qData.options.forEach((opt, idx) => {
+                optionsHtml += `
+                    <button id="${prefix}-opt-${idx}" onclick="answer(${playerNum}, ${idx})" class="btn-option p-3 sm:p-4 rounded-xl text-lg sm:text-xl font-bold flex items-center gap-3">
+                        <span class="bg-gray-200 text-gray-700 w-8 h-8 rounded-full flex items-center justify-center shrink-0 border-2 border-gray-300">${labels[idx]}</span>
+                        <span class="text-left w-full break-all">${opt}</span>
+                    </button>
+                `;
+            });
+            document.getElementById(`${prefix}-options`).innerHTML = optionsHtml;
+
+            // Start Timer
+            p.timeLeft = TIME_LIMIT;
+            updateTimerUI(playerNum);
+            if(p.timer) clearInterval(p.timer);
+            p.timer = setInterval(() => {
+                p.timeLeft--;
+                updateTimerUI(playerNum);
+                if (p.timeLeft <= 0) {
+                    clearInterval(p.timer);
+                    handleTimeOut(playerNum);
+                } else if (p.timeLeft <= 5) {
+                    playTick();
+                }
+            }, 1000);
+        }
+
+        function updateTimerUI(playerNum) {
+            let p = playerNum === 1 ? state.p1 : state.p2;
+            let prefix = playerNum === 1 ? 'p1' : 'p2';
+            document.getElementById(`${prefix}-timer-text`).innerText = p.timeLeft;
+            let percent = (p.timeLeft / TIME_LIMIT) * 100;
+            let bar = document.getElementById(`${prefix}-timer-bar`);
+            bar.style.width = `${percent}%`;
+            
+            if (percent > 50) bar.className = 'progress-bar-inner bg-green-500 h-3 rounded-full';
+            else if (percent > 25) bar.className = 'progress-bar-inner bg-yellow-400 h-3 rounded-full';
+            else bar.className = 'progress-bar-inner bg-red-500 h-3 rounded-full animate-pulse';
+        }
+
+        function answer(playerNum, selectedIdx) {
+            let p = playerNum === 1 ? state.p1 : state.p2;
+            let prefix = playerNum === 1 ? 'p1' : 'p2';
+            let qData = p.questions[p.currentQ];
+            
+            clearInterval(p.timer); // Stop timer
+
+            // Disable all buttons
+            for(let i=0; i<4; i++) {
+                let btn = document.getElementById(`${prefix}-opt-${i}`);
+                if(btn) btn.disabled = true;
+            }
+
+            let isCorrect = (selectedIdx === qData.ans);
+            let btnSelected = document.getElementById(`${prefix}-opt-${selectedIdx}`);
+            let btnCorrect = document.getElementById(`${prefix}-opt-${qData.ans}`);
+
+            if (isCorrect) {
+                p.score += 10;
+                p.correct++;
+                updateScoreUI(playerNum);
+                btnSelected.classList.add('correct');
+                showFeedback(playerNum, true, qData.exp);
+                playKereen();
+            } else {
+                if(btnSelected) btnSelected.classList.add('wrong');
+                if(btnCorrect) btnCorrect.classList.add('correct'); // Tunjukkan yang benar
+                showFeedback(playerNum, false, qData.exp);
+                playBrooot();
+            }
+        }
+
+        function handleTimeOut(playerNum) {
+            let p = playerNum === 1 ? state.p1 : state.p2;
+            let prefix = playerNum === 1 ? 'p1' : 'p2';
+            let qData = p.questions[p.currentQ];
+
+            for(let i=0; i<4; i++) {
+                let btn = document.getElementById(`${prefix}-opt-${i}`);
+                if(btn) btn.disabled = true;
+            }
+            let btnCorrect = document.getElementById(`${prefix}-opt-${qData.ans}`);
+            if(btnCorrect) btnCorrect.classList.add('correct');
+
+            showFeedback(playerNum, false, "Waktu Habis! " + qData.exp);
+            playBrooot();
+        }
+
+        function showFeedback(playerNum, isCorrect, expText) {
+            let prefix = playerNum === 1 ? 'p1' : 'p2';
+            let fb = document.getElementById(`${prefix}-feedback`);
+            document.getElementById(`${prefix}-feedback-icon`).innerText = isCorrect ? '🌟' : '💥';
+            
+            let title = document.getElementById(`${prefix}-feedback-title`);
+            title.innerText = isCorrect ? 'KEREEEN!' : 'YAAAH SALAH!';
+            title.className = `font-heading text-3xl mb-2 ${isCorrect ? 'text-green-600' : 'text-red-600'}`;
+            
+            document.getElementById(`${prefix}-feedback-exp`).innerText = expText;
+            fb.classList.remove('hidden');
+            fb.classList.add('flex');
+        }
+
+        function nextQuestion(playerNum) {
+            playClick();
+            let p = playerNum === 1 ? state.p1 : state.p2;
+            p.currentQ++;
+            loadQuestion(playerNum);
+        }
+
+        function updateScoreUI(playerNum) {
+            let prefix = playerNum === 1 ? 'p1' : 'p2';
+            let p = playerNum === 1 ? state.p1 : state.p2;
+            
+            let scoreEl = document.getElementById(`${prefix}-score`);
+            scoreEl.innerText = p.score;
+            
+            // Animasi pop
+            scoreEl.classList.remove('animate-pop');
+            void scoreEl.offsetWidth; // trigger reflow
+            scoreEl.classList.add('animate-pop');
+        }
+
+        function checkGameEnd() {
+            if (state.p1.finished && state.p2.finished) {
+                setTimeout(showResults, 1000);
+            }
+        }
+
+        function showResults() {
+            playWin();
+            fireConfetti();
+            
+            // Tentukan Pemenang
+            let winnerText = "";
+            if (state.p1.score > state.p2.score) {
+                winnerText = `Selamat, ${state.p1.name} Menang! 🎉`;
+            } else if (state.p2.score > state.p1.score) {
+                winnerText = `Selamat, ${state.p2.name} Menang! 🎉`;
+            } else {
+                winnerText = "Luar Biasa, Hasilnya SERI! 🤝";
+            }
+            document.getElementById('winner-announcement').innerText = winnerText;
+
+            // Update Statistik P1
+            document.getElementById('res-name-p1').innerText = state.p1.name;
+            document.getElementById('res-score-p1').innerText = state.p1.score;
+            document.getElementById('res-benar-p1').innerText = state.p1.correct;
+            document.getElementById('res-salah-p1').innerText = TOTAL_QUESTIONS - state.p1.correct;
+            document.getElementById('res-acc-p1').innerText = Math.round((state.p1.correct / TOTAL_QUESTIONS) * 100) + "%";
+
+            // Update Statistik P2
+            document.getElementById('res-name-p2').innerText = state.p2.name;
+            document.getElementById('res-score-p2').innerText = state.p2.score;
+            document.getElementById('res-benar-p2').innerText = state.p2.correct;
+            document.getElementById('res-salah-p2').innerText = TOTAL_QUESTIONS - state.p2.correct;
+            document.getElementById('res-acc-p2').innerText = Math.round((state.p2.correct / TOTAL_QUESTIONS) * 100) + "%";
+
+            showScreen('screen-result');
+        }
+
+        function fireConfetti() {
+            var duration = 3000;
+            var end = Date.now() + duration;
+
+            (function frame() {
+                confetti({
+                    particleCount: 5,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0 },
+                    colors: ['#3b82f6', '#a855f7', '#22c55e', '#facc15', '#ef4444']
+                });
+                confetti({
+                    particleCount: 5,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1 },
+                    colors: ['#3b82f6', '#a855f7', '#22c55e', '#facc15', '#ef4444']
+                });
+
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            }());
+        }
+    </script>
+</body>
+</html>
